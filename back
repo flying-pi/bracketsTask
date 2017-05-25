@@ -1,0 +1,126 @@
+#include <iostream>
+#include <math.h>
+
+using namespace std;
+
+const int NONE = 0;
+const int LEFT = -1;
+const int RIGHT = 1;
+
+
+int getArraySize(int backetsCount) {
+    int result = 1;
+    while (backetsCount > 0) {
+        backetsCount--;
+        result = result * 2 + 1;
+    }
+    return result;
+}
+
+void initTree(int *tree, int treeSize) {
+    tree[0] = treeSize;
+    for (int i = 1; i < treeSize; i++)
+        tree[i] = i % 2 == 1 ? LEFT : RIGHT;
+}
+
+char *printBufToStr(int *printBuf){
+    char *result = new char[printBuf[0]-1];
+    for(int i=1;i<printBuf[0];i++)
+        result[i-1] = (printBuf[i] == LEFT ? '(' : ')');
+    return result;
+}
+
+void print(int *printBuf) {
+    for (int i = 1; i < printBuf[0]; i++)
+        cout << (printBuf[i] == LEFT ? "(" : ")");
+    cout << endl;
+}
+
+int *copyPrintBuf(int *printBuf) {
+    int *result = new int[printBuf[0]];
+    for (int i = 0; i < printBuf[0]; i++)
+        result[i] = printBuf[i];
+    return result;
+}
+
+int moveToLenth(int *tree, int current, int length) {
+    int l = length;
+    int tempCurrent = current;
+    while (l > 0) {
+        tempCurrent = (tempCurrent - 1) / 2;
+        if (tree[current] == tree[tempCurrent]) {
+            l--;
+        } else {
+            l = length;
+            current += 2;
+            tempCurrent = current;
+        }
+    }
+    return current;
+}
+
+bool isCanShift(int pos) {
+    int t = 2;
+    while (pos > t) {
+        t = (t + 1) * 2;
+        if (pos == t)
+            return false;
+    }
+    return true;
+}
+
+int findAllPath(int *tree, int *addedPoint, int freePoint, int startPoint, int lastLevelStart, int countBrackets,
+                int bracketSum) {
+    if (freePoint == 0) {
+        int result = 0;
+//        cout << printBufToStr(addedPoint) <<"\t"<<bracketSum<<"\t"<<(startPoint>=lastLevelStart)<< endl;
+        if (bracketSum == 0 && startPoint>=lastLevelStart) {
+            print(addedPoint);
+            result = 1;
+        }
+        delete[] addedPoint;
+        return result;
+    }
+//    if (startPoint > lastLevelStart)
+//        startPoint = lastLevelStart;
+    int value = tree[startPoint];
+    bracketSum += value;
+    addedPoint[2 * countBrackets - freePoint + 1] = value;
+    freePoint--;
+    int top = 0;
+    int shift = 0;
+    int down = 0;
+    if (startPoint > 2)
+        top = findAllPath(tree, copyPrintBuf(addedPoint), freePoint, (startPoint - 1) / 2, lastLevelStart, countBrackets,
+                          bracketSum);
+    if (startPoint < lastLevelStart) {
+        down = findAllPath(tree, copyPrintBuf(addedPoint), freePoint, (startPoint + 1) * 2, lastLevelStart, countBrackets,
+                           bracketSum);
+    }
+    if (isCanShift(startPoint)) {
+        shift = findAllPath(tree, copyPrintBuf(addedPoint), freePoint, startPoint + 1, lastLevelStart, countBrackets,
+                            bracketSum);
+    }
+    delete[]addedPoint;
+    return top + shift + down;
+
+
+}
+
+int main() {
+    int countBrackets = 3;
+//    cin >> countBrackets;
+    int treeSize = getArraySize(countBrackets);
+    int lastLevelSart = (int) pow(2, countBrackets) - 1;
+    int *tree = new int[treeSize];
+    initTree(tree, treeSize);
+
+    int *printBuf = new int[countBrackets * 2 + 1];
+    printBuf[0] = countBrackets * 2 + 1;
+//    int result = findAllPath(tree, printBuf, countBrackets * 2, lastLevelSart/2, lastLevelSart, countBrackets, 0);
+    int result = findAllPath(tree, printBuf, countBrackets * 2, lastLevelSart, lastLevelSart, countBrackets, 0);
+
+    cout << "result :: " << result;
+
+    return 0;
+}
